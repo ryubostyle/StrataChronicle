@@ -2,63 +2,94 @@
 import os
 import glob
 import shutil
-try:
-    import yaml
-except ImportError:
-    yaml = None
+from datetime import datetime
 
 class CirculationPipeline:
-    """
-    完全自律循環パイプライン（Declarative Cascading Architecture）:
-    architecture.yml を読み込み、量子準位（Chaos -> Entropy -> Processor -> StrataCrystallization）
-    に沿ってデータを段階的かつ離散的に精製・結晶化させる主制御装置。
-    """
     def __init__(self):
         self.root_dir = os.path.dirname(os.path.abspath(__file__))
-        self.arch_config = self._load_architecture()
-        
-        # 各聖域のパス定義（architecture.yml から動的解決、フォールバック付き）
-        self.chaos_dir = os.path.join(self.root_dir, "Chaos")
-        self.entropy_dir = os.path.join(self.root_dir, "Entropy")
-        self.processor_dir = os.path.join(self.root_dir, "Processor")
-        self.crystallization_dir = os.path.join(self.root_dir, "StrataCrystallization")
-
-    def _load_architecture(self) -> dict:
-        """リポジトリのルートにある architecture.yml から位相定義をロードする"""
-        yml_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "architecture.yml")
-        if yaml and os.path.exists(yml_path):
-            try:
-                with open(yml_path, 'r', encoding='utf-8') as f:
-                    return yaml.safe_load(f)
-            except Exception as e:
-                print(f"⚠️ [Architecture Warning] architecture.yml のロードに失敗しました: {e}")
-        return {}
+        self.film_dir = os.path.join(self.root_dir, "Film")
+        self.projector_dir = os.path.join(self.root_dir, "Projector")
+        self.screen_dir = os.path.join(self.root_dir, "Screen")
+        self.theater_dir = os.path.join(self.root_dir, "Theater")
 
     def run_metabolism(self):
-        print("🔥 [Cloud Metabolism] 宣言的アーキテクチャに基づく雲上の代謝サイクルを開始します...")
+        print("🎬 [StrataChronicle] シネマティック代謝サイクルを開始します...")
+        
+        # 1. Film -> Projector (生テキストのシナリオ化・YAML付与)
+        self._process_film_to_projector()
+        
+        # 2. Projector -> Screen (今回は一旦パススルーまたはそのまま流す)
+        self._sweep_sanctuary(self.projector_dir, self.screen_dir, "🎥 [Projector -> Screen]")
+        
+        # 3. Screen -> Theater (最終的な映写館へ結晶化)
+        self._sweep_sanctuary(self.screen_dir, self.theater_dir, "🏛️ [Screen -> Theater]")
+        
+        self._crystallize_theater()
+        print("✨ [StrataChronicle] 今回の代謝サイクルが完了しました。")
 
-        # 1. [Chaos -> Entropy] 混沌から神経・血流への量子ジャンプ
-        self._sweep_sanctuary(self.chaos_dir, self.entropy_dir, "🚀 [Chaos -> Entropy]")
+    def _process_film_to_projector(self):
+        """Film 配下の生テキストを FrontMetaData 付きのシナリオ Markdown に変換する"""
+        if not os.path.exists(self.film_dir):
+            return
+        if not os.path.exists(self.projector_dir):
+            os.makedirs(self.projector_dir)
 
-        # 2. [Entropy -> Processor] 神経・血流から心臓部（執行）への量子ジャンプ
-        self._sweep_sanctuary(self.entropy_dir, self.processor_dir, "⚡ [Entropy -> Processor]")
+        files = glob.glob(os.path.join(self.film_dir, "*"))
+        for file_path in files:
+            if os.path.isfile(file_path):
+                base_name = os.path.basename(file_path)
+                if base_name == ".gitkeep":
+                    continue
 
-        # 3. [Processor -> StrataCrystallization] 執行部から永遠の地層結晶化エリアへのスイープ
-        self._sweep_sanctuary(self.processor_dir, self.crystallization_dir, "⚙️ [Processor -> Crystallization]")
+                # 生テキストを読み込む
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        raw_content = f.read().strip()
+                except Exception as e:
+                    print(f"⚠️ 読み込みエラー ({base_name}): {e}")
+                    continue
 
-        # 4. [StrataCrystallization Screen Output] 最下流での画面表出と地層への定着（還流停止）
-        self._crystallize_and_store()
+                # 拡張子を除いたタイトル名を取得
+                title_stem = os.path.splitext(base_name)[0]
+                today_str = datetime.now().strftime("%Y-%m-%d")
 
-        print("✨ [Cloud Metabolism] 飛び飛びの量子準位を巡る一連の代謝サイクルが正常に完了しました。")
+                # YAML Front Matter 付きのシナリオ Markdown を構築
+                markdown_content = f"""---
+title: "{title_stem}"
+date: "{today_str}"
+stage: "Film -> Projector"
+author: "StrataChronicle-AI"
+status: "Raw-Transformed"
+---
+
+# シナリオ台本: {title_stem}
+
+## 1. 原初プロット・素材 (Raw Notes)
+{raw_content}
+
+## 2. 演出メモ
+- [ ] カット割りの構築
+- [ ] 背景（Screen）の選定
+"""
+
+                # 出力先のファイル名 (.md に統一)
+                dest_file_name = f"{title_stem}.md"
+                dest_path = os.path.join(self.projector_dir, dest_file_name)
+
+                # 書き出し
+                with open(dest_path, 'w', encoding='utf-8') as dest_file:
+                    dest_file.write(markdown_content)
+
+                # 元の Film 配下の生ファイルは代謝により消費されたため削除（または移動）
+                os.remove(file_path)
+                print(f"    🎞️ [Film -> Projector] 台本生成・変換: [{base_name}] -> {dest_file_name}")
 
     def _sweep_sanctuary(self, src_dir: str, dest_dir: str, label: str):
-        """指定された聖域間の物理 sweep-to を実行する"""
         if not os.path.exists(src_dir):
             return
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
 
-        # .gitkeep 以外のすべてのファイルを対象にする
         files = glob.glob(os.path.join(src_dir, "*"))
         for file_path in files:
             if os.path.isfile(file_path):
@@ -73,32 +104,29 @@ class CirculationPipeline:
                 shutil.move(file_path, dest_path)
                 print(f"    {label} 移送: [{base_name}] -> {os.path.basename(dest_dir)}")
 
-    def _crystallize_and_store(self):
-        """StrataCrystallization 内に到達した成果物を画面表出し、地層として永遠に定着させる"""
-        if not os.path.exists(self.crystallization_dir):
+    def _crystallize_theater(self):
+        if not os.path.exists(self.theater_dir):
             return
 
-        files = glob.glob(os.path.join(self.crystallization_dir, "*"))
+        files = glob.glob(os.path.join(self.theater_dir, "*"))
         for file_path in files:
             if os.path.isfile(file_path):
                 base_name = os.path.basename(file_path)
                 if base_name == ".gitkeep":
                     continue
 
-                # 1. 画面 (Screen) への表出
-                print(f"\n    💎✨ [Crystallization Screen Output] 表出完了 ──────────────────")
-                print(f"    📜 結晶体ファイル: [{base_name}]")
+                print(f"\n    💎✨ [Theater Screen Output] 映写完了 ──────────────────")
+                print(f"    📜 上映作品: [{base_name}]")
                 try:
                     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                         content = f.read()
                         print(f"    --------------------------------------------------")
-                        print(content[:500] + ("..." if len(content) > 500 else ""))
+                        print(content[:400] + ("..." if len(content) > 400 else ""))
                         print(f"    --------------------------------------------------\n")
                 except Exception as e:
-                    print(f"    (Binary or unreadable asset: {e})")
+                    print(f"    (Binary asset: {e})")
 
-                # 🏛️ 【地層の定着】Chaosへの物理還流は行わず、聖域（StrataCrystallization）に永遠に堆積させる
-                print(f"    🏛️ [Strata Stored] 循環の輪は閉じられず、結晶体が永遠の地層に定着しました: [{base_name}]")
+                print(f"    🏛️ [Strata Stored] 映画館の地層に作品が永遠に刻まれました: [{base_name}]")
 
 if __name__ == "__main__":
     pipeline = CirculationPipeline()
