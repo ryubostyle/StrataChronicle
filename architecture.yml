@@ -7,20 +7,20 @@ version: "2.0.0"
 sanctuaries:
   - name: "Film"
     level: 0
-    role: "感覚器・揺らぎの原初インプット"
+    role: "台本・シナリオ生成"
     next: "Projector"
 
   - name: "Projector"
     level: 1
-    role: "神経・血流・安全配管と整流"
+    role: "カット・シーン・動画生成"
     next: "Screen"
 
   - name: "Screen"
     level: 2
-    role: "心臓・意志・実務執行オーケストレーター"
+    role: "Templates/背景生成"
     next: "Theater"
 
   - name: "Theater"
     level: 3
-    role: "地層・永遠の結晶化アーカイブ（終端）"
+    role: "映画館"
     next: null
