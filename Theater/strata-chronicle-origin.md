@@ -1,3 +1,14 @@
+---
+title: "strata-chronicle-origin"
+date: "2026-11-13"
+stage: "Film -> Projector"
+author: "StrataChronicle-AI"
+status: "Raw-Transformed"
+---
+
+# シナリオ台本: strata-chronicle-origin
+
+## 1. 原初プロット・素材 (Raw Notes)
 # 🏛️ StrataChronicle
 
 > *「すべての澱が削ぎ落とされ、光なき深海へ。冷たく光るダイヤの結晶の底――そのさらに深淵には、時間すら凍てついた量子場のマグマが、静かに息をしている。」*
@@ -39,3 +50,6 @@
 ---
 ---
 
+## 2. 演出メモ
+- [ ] カット割りの構築
+- [ ] 背景（Screen）の選定
