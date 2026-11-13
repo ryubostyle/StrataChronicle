@@ -1,18 +1,15 @@
-# .github/workflows/scroll-strata.yml
 name: StrataChronicle Cloud Metabolism
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
-  schedule:
-    - cron: '0 0 * * *'
 
 jobs:
   metabolism:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,16 +24,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyyaml
 
-      - name: Materialize Sanctuaries
-        run: python build_sanctuaries.py
+      - name: Materialize Sanctuaries & Run Bootstrap
+        run: |
+          python build_sanctuaries.py
 
       - name: Execute Metabolism
-        run: python main.py
+        run: |
+          if [ -f main.py ]; then
+            python main.py
+          fi
 
       - name: Commit and Push Strata Crystallization
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add Film/ Projector/ Screen/ Theater/ architecture.yml
-          git diff --quiet && git diff --staged --quiet || git commit -m "🎬 [Cloud Metabolism] Cinematic sweep & circulation executed."
-          git push
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # 💡 プッシュ前の安全装置：リモートの変更を先に取り込んで競合を回避
+          git pull --rebase origin main || echo "No rebase needed"
+          
+          git add .
+          git diff --quiet && git diff --staged --quiet || git commit -m "💎 [Cloud Metabolism] Cinematic sweep & crystallization"
+          git push origin main
