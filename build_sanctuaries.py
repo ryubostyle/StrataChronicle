@@ -30,7 +30,7 @@ def materialize_architecture():
                 pass
 
         init_path = os.path.join(name, "__init__.py")
-        init_content = f'''import os
+        init_content = '''import os
 import yaml
 
 CURRENT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -49,7 +49,7 @@ def resolve_next_root():
                     if next_name:
                         return os.path.join(REPOSITORY_ROOT, next_name)
         except Exception as e:
-            print(f"⚠️ 読み込みエラー: {{e}}")
+            print(f"⚠️ 読み込みエラー: {e}")
     return CURRENT_ROOT
 
 SANCTUARY_ROOT = CURRENT_ROOT
@@ -128,14 +128,16 @@ class DynamicCirculationPipeline:
                 except:
                     continue
                 stem = os.path.splitext(base)[0]
-                md = f\"\"\"---
-title: "{stem}"
-date: "{datetime.now().strftime('%Y-%m-%d')}"
-stage: "Auto-Bootstrap"
----
-# シナリオ台本: {stem}
-{content}
-\"\"\"
+                
+                # 安全な文字列結合によるマークダウン生成
+                md = "---\\n"
+                md += f'title: "{stem}"\\n'
+                md += f'date: "{datetime.now().strftime("%Y-%m-%d")}"\\n'
+                md += 'stage: "Auto-Bootstrap"\\n'
+                md += "---\\n\\n"
+                md += f"# シナリオ台本: {stem}\\n\\n"
+                md += f"{content}\\n"
+
                 dest_path = os.path.join(dest, f"{stem}.md")
                 with open(dest_path, 'w', encoding='utf-8') as df:
                     df.write(md)
@@ -165,12 +167,12 @@ stage: "Auto-Bootstrap"
                 print(f"    💎✨ [{term}] 映写完了: {base}")
 
 if __name__ == "__main__":
-    Pipeline = DynamicCirculationPipeline()
-    Pipeline.run_metabolism()
+    pipeline = DynamicCirculationPipeline()
+    pipeline.run_metabolism()
 '''
     with open(target_path, 'w', encoding='utf-8') as f:
         f.write(default_code)
-    print(  f"  + ✨ [Bootstrap] main.py が正常に自動生成・設定されました: {target_path}")
+    print(f"  + ✨ [Bootstrap] main.py が正常に自動生成・設定されました: {target_path}")
 
 if __name__ == "__main__":
     materialize_architecture()
