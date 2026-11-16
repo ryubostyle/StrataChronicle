@@ -11,14 +11,80 @@ DEFAULT_ARCHITECTURE = {
     "system": "StrataChronicle",
     "version": "2.0.0",
     "sanctuaries": [
-        {"name": "Film", "next": "Projector", "role": "Raw draft intake & binding"},
-        {"name": "Projector", "next": "Screen", "role": "Scene structuring & projection"},
+        {"name": "Film", "next": "Projector", "role": "Raw draft intake & script binding"},
+        {"name": "Projector", "next": "Screen", "role": "Scene structuring & optical projection"},
         {"name": "Screen", "next": "Theater", "role": "Visual formatting & master print"},
-        {"name": "Theater", "next": None, "role": "Permanent archive & screening"},
+        {"name": "Theater", "next": None, "role": "Permanent archive & final screening"},
     ],
 }
 
 # --- テンプレート群 ---
+
+BASE_INIT_TEMPLATE = '''import os
+import glob
+import yaml
+from abc import ABC, abstractmethod
+
+
+class BaseGenerator(ABC):
+    """全聖域の代謝サイクルと、architecture.yml からの設定オーバーライドを司る基底クラス"""
+
+    def __init__(self, src_dir: str, dest_dir: str):
+        self.src_dir = src_dir
+        self.dest_dir = dest_dir
+        self.root_dir = os.path.dirname(os.path.abspath(src_dir))
+        self.sanctuary_name = os.path.basename(src_dir)
+        self.config = self._load_override_config()
+
+    def _load_override_config(self) -> dict:
+        """architecture.yml の generators.<聖域名> があれば取得し、無ければ空辞書を返す"""
+        arch_path = os.path.join(self.root_dir, "architecture.yml")
+        if os.path.exists(arch_path):
+            try:
+                with open(arch_path, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or {}
+                    return data.get("generators", {}).get(self.sanctuary_name, {})
+            except Exception:
+                pass
+        return {}
+
+    def execute(self):
+        """共通の代謝フロー：走査 -> 変換 -> 次聖域へ出力 -> 元ファイル削除"""
+        if not os.path.exists(self.src_dir):
+            return
+
+        os.makedirs(self.dest_dir, exist_ok=True)
+        files = glob.glob(os.path.join(self.src_dir, "*"))
+
+        for file_path in files:
+            if not os.path.isfile(file_path):
+                continue
+
+            base_name = os.path.basename(file_path)
+            if base_name == ".gitkeep":
+                continue
+
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    raw_content = f.read()
+
+                dest_filename, formatted_content = self.process_content(base_name, raw_content)
+
+                if formatted_content is not None:
+                    dest_path = os.path.join(self.dest_dir, dest_filename)
+                    with open(dest_path, "w", encoding="utf-8") as out_f:
+                        out_f.write(formatted_content)
+
+                    os.remove(file_path)
+                    print(f"    ✨ [{self.__class__.__name__}] {base_name} -> {dest_filename}")
+
+            except Exception as e:
+                print(f"    ⚠️ [{self.__class__.__name__}] エラー ({base_name}): {e}")
+
+    @abstractmethod
+    def process_content(self, filename: str, raw_content: str) -> tuple[str, str]:
+        pass
+'''
 
 MAIN_PY_TEMPLATE = '''# main.py (Auto-synced by build_sanctuaries.py)
 import os
@@ -64,24 +130,20 @@ class DynamicCirculationPipeline:
     def run_metabolism(self):
         print("🎬 [StrataChronicle] 動的代謝サイクルを開始します...")
 
-        # 上流から下流への遷移リストを構築
         transitions = [
             (self.sanctuaries[i]["name"], self.sanctuaries[i + 1]["name"])
             for i in range(len(self.sanctuaries) - 1)
         ]
 
-        # 1. 各聖域間の代謝・加工リレー
         for src_name, dest_name in transitions:
             gen_cls = self.GENERATOR_MAP.get(src_name)
             if gen_cls:
                 gen_cls(self.root_dir, src_name=src_name, dest_name=dest_name).execute()
             else:
-                # GENERATOR_MAP に未登録の拡張聖域が追加された場合の汎用スイープ
                 src_dir = os.path.join(self.root_dir, src_name)
                 dest_dir = os.path.join(self.root_dir, dest_name)
                 self._sweep(src_dir, dest_dir, f"[{src_name} -> {dest_name}]")
 
-        # 2. 終端聖域での定着・アーカイブ処理
         if self.sanctuaries:
             term_name = self.sanctuaries[-1]["name"]
             if term_name == "Theater":
@@ -92,7 +154,6 @@ class DynamicCirculationPipeline:
         print("✨ [StrataChronicle] 代謝サイクルが完遂しました。")
 
     def _sweep(self, src: str, dest: str, label: str):
-        """専用Generatorを持たない拡張聖域用のフォールバック移送"""
         if not os.path.exists(src):
             return
         os.makedirs(dest, exist_ok=True)
@@ -108,7 +169,6 @@ class DynamicCirculationPipeline:
                 print(f"    ⚡ {label} 移送: {base}")
 
     def _crystallize(self, term: str):
-        """Theater 以外のカスタム終端聖域が指定された場合のログ出力"""
         term_dir = os.path.join(self.root_dir, term)
         if not os.path.exists(term_dir):
             return
@@ -123,56 +183,6 @@ class DynamicCirculationPipeline:
 if __name__ == "__main__":
     pipeline = DynamicCirculationPipeline()
     pipeline.run_metabolism()
-'''
-
-BASE_INIT_TEMPLATE = '''import os
-import glob
-from abc import ABC, abstractmethod
-
-
-class BaseGenerator(ABC):
-    """全聖域の代謝サイクルを司る基底ジェネレータ"""
-
-    def __init__(self, src_dir: str, dest_dir: str):
-        self.src_dir = src_dir
-        self.dest_dir = dest_dir
-
-    def execute(self):
-        """共通の代謝フロー：走査 -> 変換 -> 次聖域へ出力 -> 元ファイル削除"""
-        if not os.path.exists(self.src_dir):
-            return
-
-        os.makedirs(self.dest_dir, exist_ok=True)
-        files = glob.glob(os.path.join(self.src_dir, "*"))
-
-        for file_path in files:
-            if not os.path.isfile(file_path):
-                continue
-
-            base_name = os.path.basename(file_path)
-            if base_name == ".gitkeep":
-                continue
-
-            try:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    raw_content = f.read()
-
-                dest_filename, formatted_content = self.process_content(base_name, raw_content)
-
-                if formatted_content is not None:
-                    dest_path = os.path.join(self.dest_dir, dest_filename)
-                    with open(dest_path, "w", encoding="utf-8") as out_f:
-                        out_f.write(formatted_content)
-
-                    os.remove(file_path)
-                    print(f"    ✨ [{self.__class__.__name__}] {base_name} -> {dest_filename}")
-
-            except Exception as e:
-                print(f"    ⚠️ [{self.__class__.__name__}] エラー ({base_name}): {e}")
-
-    @abstractmethod
-    def process_content(self, filename: str, raw_content: str) -> tuple[str, str]:
-        pass
 '''
 
 
@@ -197,7 +207,7 @@ def build_sanctuary_dirs(sanctuaries: list[dict]):
         if not os.path.exists(gitkeep_path):
             with open(gitkeep_path, "w", encoding="utf-8") as f:
                 f.write("")
-        print(f"🏛️ 聖域確認完了: {name}/")
+        print(f"🏛️ 聖域構築完了: {name}/")
 
 
 def ensure_generator_package():
