@@ -1,13 +1,30 @@
 import os
 import glob
+import yaml
 from abc import ABC, abstractmethod
 
+
 class BaseGenerator(ABC):
-    """全聖域の代謝サイクルを司る基底ジェネレータ"""
+    """全聖域の代謝サイクルと、architecture.yml からの設定オーバーライドを司る基底クラス"""
 
     def __init__(self, src_dir: str, dest_dir: str):
         self.src_dir = src_dir
         self.dest_dir = dest_dir
+        self.root_dir = os.path.dirname(os.path.abspath(src_dir))
+        self.sanctuary_name = os.path.basename(src_dir)
+        self.config = self._load_override_config()
+
+    def _load_override_config(self) -> dict:
+        """architecture.yml の generators.<聖域名> があれば取得し、無ければ空辞書を返す"""
+        arch_path = os.path.join(self.root_dir, "architecture.yml")
+        if os.path.exists(arch_path):
+            try:
+                with open(arch_path, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or {}
+                    return data.get("generators", {}).get(self.sanctuary_name, {})
+            except Exception:
+                pass
+        return {}
 
     def execute(self):
         """共通の代謝フロー：走査 -> 変換 -> 次聖域へ出力 -> 元ファイル削除"""
