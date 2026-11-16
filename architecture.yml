@@ -1,26 +1,25 @@
-# ==========================================
-# Oriented-Philosophia Architecture Definition
-# ==========================================
-system: "Autonomous Circulation Pipeline"
-version: "3.0.0"
+# architecture.yml
+# StrataChronicle システムの位相トポロジおよび基本設計図（Single Source of Truth）
+
+system: "StrataChronicle"
+version: "2.0.0"
 
 sanctuaries:
   - name: "Film"
-    level: 0
-    role: "台本・シナリオ生成"
     next: "Projector"
-
+    role: "Raw draft intake & script binding"
   - name: "Projector"
-    level: 1
-    role: "カット・シーン・動画生成"
     next: "Screen"
-
+    role: "Scene structuring & optical projection"
   - name: "Screen"
-    level: 2
-    role: "Templates/背景生成"
     next: "Theater"
-
+    role: "Visual formatting & master print"
   - name: "Theater"
-    level: 3
-    role: "映画館"
     next: null
+    role: "Permanent archive & final screening"
+
+# 【オプション】各聖域のGeneratorのデフォルト挙動を上書きしたい場合のみ記述します
+# generators:
+#   Film:
+#     mode: "rule_based"        # "rule_based" | "dialogue"
+#     chapter_prefix: "第{n}節"
