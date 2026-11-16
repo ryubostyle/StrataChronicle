@@ -17,7 +17,6 @@ permissions:
 jobs:
   circulate-strata:
     runs-on: ubuntu-latest
-    # 自動コミット自身による無限ループを確実に防止
     if: github.actor != 'github-actions[bot]'
 
     steps:
@@ -41,7 +40,13 @@ jobs:
         run: python main.py
 
       - name: 6. Auto-Commit & Push Crystallized Strata
-        uses: endbug/git-auto-commit@v5
-        with:
-          commit_message: "🎬 [StrataChronicle] Autonomous circulation & archive crystallization"
-          branch: main
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A
+          if ! git diff --staged --quiet; then
+            git commit -m "🎬 [StrataChronicle] Autonomous circulation & archive crystallization"
+            git push
+          else
+            echo "✨ 変更差分がないため、コミットをスキップしました。"
+          fi
