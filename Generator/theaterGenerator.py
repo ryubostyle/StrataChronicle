@@ -10,7 +10,6 @@ class TheaterGenerator(BaseGenerator):
 
     def __init__(self, root_dir: str, src_name: str = "Theater"):
         theater_dir = os.path.join(root_dir, src_name)
-        # 終端のため、出力先も自身のディレクトリ（インプレース定着）
         super().__init__(theater_dir, theater_dir)
 
     def execute(self):
@@ -27,7 +26,6 @@ class TheaterGenerator(BaseGenerator):
             with open(file_path, "r", encoding="utf-8") as f:
                 raw_content = f.read()
 
-            # すでに最終上映（Archived）済みの作品はスキップ
             if 'status: "Archived-Feature"' in raw_content:
                 continue
 
@@ -40,6 +38,9 @@ class TheaterGenerator(BaseGenerator):
     def process_content(self, filename: str, raw_content: str) -> tuple[str, str]:
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
 
+        # デフォルト設定（architecture.yml の generators.Theater で上書き可能）
+        seal_label = self.config.get("seal_label", "Theater Archive Seal")
+
         archived_content = re.sub(
             r'sanctuary_stage:\s*".*?"',
             'sanctuary_stage: "Theater (Permanent Archive)"',
@@ -51,7 +52,6 @@ class TheaterGenerator(BaseGenerator):
             archived_content,
         )
 
-        # プレビュー抜粋をログ出力
         preview_lines = [
             line.strip()
             for line in archived_content.splitlines()
@@ -59,5 +59,5 @@ class TheaterGenerator(BaseGenerator):
         ]
         print(f"       🎬 タイトル抜粋: {preview_lines[0] if preview_lines else filename}")
 
-        footer = f"\n> 🎞️ **Theater Archive Seal**: {now_str} に正式上映作品として永久保存されました。\n"
+        footer = f"\n> 🎞️ **{seal_label}**: {now_str} に正式上映作品として永久保存されました。\n"
         return filename, archived_content + footer
