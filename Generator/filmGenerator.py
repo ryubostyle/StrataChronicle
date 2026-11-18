@@ -12,7 +12,10 @@ class FilmGenerator(BaseGenerator):
 
     def process_content(self, filename: str, raw_content: str) -> tuple[str, str]:
         stem = os.path.splitext(filename)[0]
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+        # 変更前
+        # now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+        # 変更後
+        now_str = self._get_current_timestamp()
 
         # デフォルト設定（architecture.yml に generators.Film があれば上書きされる）
         mode = self.config.get("mode", "rule_based")  # "rule_based" | "dialogue"
