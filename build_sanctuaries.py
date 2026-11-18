@@ -29,11 +29,11 @@ from abc import ABC, abstractmethod
 class BaseGenerator(ABC):
     """全聖域の代謝サイクルと、architecture.yml からの設定オーバーライドを司る基底クラス"""
 
-    def __init__(self, src_dir: str, dest_dir: str):
-        self.src_dir = src_dir
-        self.dest_dir = dest_dir
-        self.root_dir = os.path.dirname(os.path.abspath(src_dir))
-        self.sanctuary_name = os.path.basename(src_dir)
+    def __init__(self, root_dir: str, src_name: str, dest_name: str = None):
+        self.root_dir = os.path.abspath(root_dir)
+        self.sanctuary_name = src_name
+        self.src_dir = os.path.join(self.root_dir, src_name)
+        self.dest_dir = os.path.join(self.root_dir, dest_name) if dest_name else self.src_dir
         self.config = self._load_override_config()
 
     def _load_override_config(self) -> dict:
@@ -59,7 +59,6 @@ class BaseGenerator(ABC):
         for file_path in files:
             if not os.path.isfile(file_path):
                 continue
-
             base_name = os.path.basename(file_path)
             if base_name == ".gitkeep":
                 continue
@@ -75,7 +74,8 @@ class BaseGenerator(ABC):
                     with open(dest_path, "w", encoding="utf-8") as out_f:
                         out_f.write(formatted_content)
 
-                    os.remove(file_path)
+                    if os.path.abspath(file_path) != os.path.abspath(dest_path):
+                        os.remove(file_path)
                     print(f"    ✨ [{self.__class__.__name__}] {base_name} -> {dest_filename}")
 
             except Exception as e:
@@ -120,6 +120,7 @@ class DynamicCirculationPipeline:
                     return config.get("sanctuaries", [])
             except Exception as e:
                 print(f"⚠️ architecture.yml の読み込みエラー: {e}")
+
         return [
             {"name": "Film", "next": "Projector"},
             {"name": "Projector", "next": "Screen"},
@@ -129,7 +130,6 @@ class DynamicCirculationPipeline:
 
     def run_metabolism(self):
         print("🎬 [StrataChronicle] 動的代謝サイクルを開始します...")
-
         transitions = [
             (self.sanctuaries[i]["name"], self.sanctuaries[i + 1]["name"])
             for i in range(len(self.sanctuaries) - 1)
