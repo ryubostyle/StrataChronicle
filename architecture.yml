@@ -3,7 +3,7 @@
 
 system: "StrataChronicle"
 version: "2.0.0"
-
+timezone: "Asia/Tokyo"  # ← 追加
 sanctuaries:
   - name: "Film"
     next: "Projector"
