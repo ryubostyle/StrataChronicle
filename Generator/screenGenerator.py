@@ -11,7 +11,10 @@ class ScreenGenerator(BaseGenerator):
         super().__init__(os.path.join(root_dir, src_name), os.path.join(root_dir, dest_name))
 
     def process_content(self, filename: str, raw_content: str) -> tuple[str, str]:
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+        # 変更前
+        # now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+        # 変更後
+        now_str = self._get_current_timestamp()
 
         # デフォルト設定（architecture.yml の generators.Screen で上書き可能）
         screen_type = self.config.get("screen_type", "IMAX Silver Screen")
