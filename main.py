@@ -32,6 +32,7 @@ class DynamicCirculationPipeline:
                     return config.get("sanctuaries", [])
             except Exception as e:
                 print(f"⚠️ architecture.yml の読み込みエラー: {e}")
+
         return [
             {"name": "Film", "next": "Projector"},
             {"name": "Projector", "next": "Screen"},
@@ -41,7 +42,6 @@ class DynamicCirculationPipeline:
 
     def run_metabolism(self):
         print("🎬 [StrataChronicle] 動的代謝サイクルを開始します...")
-
         transitions = [
             (self.sanctuaries[i]["name"], self.sanctuaries[i + 1]["name"])
             for i in range(len(self.sanctuaries) - 1)
