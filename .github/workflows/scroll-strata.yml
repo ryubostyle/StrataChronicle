@@ -1,4 +1,4 @@
-name: StrataChronicle Dynamic Circulation
+name: StrataChronicle Pilgrimage Circulation
 
 on:
   push:
@@ -9,13 +9,13 @@ on:
       - 'architecture.yml'
       - 'build_sanctuaries.py'
       - 'Generator/**'
-  workflow_dispatch:
+  workflow_dispatch: # 手動トリガーによる聖域の巡礼
 
 permissions:
   contents: write
 
 jobs:
-  circulate-strata:
+  pilgrimage_cycle:
     runs-on: ubuntu-latest
     if: github.actor != 'github-actions[bot]'
 
@@ -32,12 +32,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyyaml
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: 4. Build Sanctuaries & Sync main.py
         run: python build_sanctuaries.py
 
-      - name: 5. Run Dynamic Metabolism Pipeline
-        run: python main.py
+      - name: 5. Ignite Pilgrimage Engine (Run Dynamic Metabolism)
+        run: |
+          # 4つの聖域を巡る巡礼パイプライン（main.py経由での駆動）
+          python main.py
 
       - name: 6. Auto-Commit & Push Crystallized Strata
         run: |
@@ -45,7 +48,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add -A
           if ! git diff --staged --quiet; then
-            git commit -m "🎬 [StrataChronicle] Autonomous circulation & archive crystallization"
+            git commit -m "🎬 [StrataChronicle] Autonomous pilgrimage & archive crystallization"
             git push
           else
             echo "✨ 変更差分がないため、コミットをスキップしました。"
