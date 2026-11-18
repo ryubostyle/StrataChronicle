@@ -2,7 +2,8 @@ import os
 import glob
 import yaml
 from abc import ABC, abstractmethod
-
+from datetime import datetime
+from zoneinfo import ZoneInfo  # Python 3.9+ 標準ライブラリ
 
 class BaseGenerator(ABC):
     """全聖域の代謝サイクルと、architecture.yml からの設定オーバーライドを司る基底クラス"""
@@ -58,6 +59,15 @@ class BaseGenerator(ABC):
 
             except Exception as e:
                 print(f"    ⚠️ [{self.__class__.__name__}] エラー ({base_name}): {e}")
+
+    def _get_current_timestamp(self) -> str:
+        """architecture.yml の設定（なければ Asia/Tokyo）に基づいて現在時刻を返す"""
+        tz_name = self.config.get("timezone", "Asia/Tokyo")
+        try:
+            tz = ZoneInfo(tz_name)
+        except Exception:
+            tz = ZoneInfo("Asia/Tokyo")
+        return datetime.now(tz).strftime("%Y-%m-%d %H:%M")
 
     @abstractmethod
     def process_content(self, filename: str, raw_content: str) -> tuple[str, str]:
