@@ -36,7 +36,10 @@ class TheaterGenerator(BaseGenerator):
                 print(f"    🏛️ [TheaterGenerator] 永久上映アーカイブ定着完了: {dest_filename}")
 
     def process_content(self, filename: str, raw_content: str) -> tuple[str, str]:
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+        # 変更前
+        # now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+        # 変更後
+        now_str = self._get_current_timestamp()
 
         # デフォルト設定（architecture.yml の generators.Theater で上書き可能）
         seal_label = self.config.get("seal_label", "Theater Archive Seal")
