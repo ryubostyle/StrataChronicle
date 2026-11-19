@@ -44,13 +44,14 @@ jobs:
       - name: Run circulation pipeline
         run: python main.py
 
-      - name: Commit and push crystallized strata
+            - name: Commit and push crystallized strata
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if ! git diff --staged --quiet; then
             git commit -m "[StrataChronicle] Autonomous pilgrimage & archive crystallization"
+            git pull --rebase origin main
             git push
           else
             echo "変更がないためコミットをスキップしました。"
