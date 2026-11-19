@@ -1,0 +1,57 @@
+name: StrataChronicle Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Film/**"
+      - "architecture.yml"
+      - "build_sanctuaries.py"
+      - ".github/workflows/scroll-strata.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  TZ: Asia/Tokyo
+
+jobs:
+  circulate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyYAML
+
+      - name: Materialize sanctuaries
+        run: python build_sanctuaries.py
+
+      - name: Run circulation pipeline
+        run: python main.py
+
+      - name: Commit and push crystallized strata
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --staged --quiet; then
+            git commit -m "[StrataChronicle] Autonomous pilgrimage & archive crystallization"
+            git push
+          else
+            echo "変更がないためコミットをスキップしました。"
+          fi
