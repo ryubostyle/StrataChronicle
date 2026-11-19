@@ -44,7 +44,7 @@ jobs:
       - name: Run circulation pipeline
         run: python main.py
 
-            - name: Commit and push crystallized strata
+      - name: Commit and push crystallized strata
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
